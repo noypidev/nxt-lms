@@ -29,7 +29,7 @@ const CourseIdPage = async ({ params }: {
       include: {
          chapters: {
             orderBy: {
-               position: "desc"
+               position: "asc"
             }
          },
          attachments: {
@@ -111,7 +111,7 @@ const CourseIdPage = async ({ params }: {
                      </h2>
                   </div>
                   <ChaptersForm
-                     initialData={course}
+                     course={course}
                   />
                </div>
                <div>

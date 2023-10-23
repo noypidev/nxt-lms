@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { cn } from "@/lib/utils";
-import { Pencil, PlusCircle } from "lucide-react";
+import { Loader2, Pencil, PlusCircle } from "lucide-react";
 
 import {
    Form,
@@ -22,9 +22,10 @@ import {
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
+import ChaptersList from "./chapters-list";
 
 interface ChaptersFormProps {
-   initialData: Course & { chapters: Chapter[]; };
+   course: Course & { chapters: Chapter[]; };
 }
 
 const formSchema = z.object({
@@ -34,7 +35,7 @@ const formSchema = z.object({
 });
 
 export const ChaptersForm = ({
-   initialData
+   course
 }: ChaptersFormProps) => {
    const router = useRouter();
    const [isCreating, setIsCreating] = useState(false);
@@ -53,7 +54,7 @@ export const ChaptersForm = ({
 
    const onSubmit = async (values: z.infer<typeof formSchema>) => {
       try {
-         await axios.post(`/api/courses/${ initialData.id }/chapters`, values);
+         await axios.post(`/api/courses/${ course.id }/chapters`, values);
          toast.success("Chapter created!");
          toggleCreating();
          router.refresh();
@@ -62,8 +63,33 @@ export const ChaptersForm = ({
       }
    };
 
+   const onEdit = (id: string) => {
+      router.push(`/teacher/courses/${ course.id }/chapters/${ id }`);
+   };
+
+   const onReorder = async (updateData: { id: string; position: number; }[]) => {
+      try {
+         setIsUpdating(true);
+
+         await axios.put(`/api/courses/${ course.id }/chapters/reorder`, {
+            list: updateData
+         });
+         toast.success("Chapters reordered");
+         router.refresh();
+      } catch (error) {
+         toast.error("Someting went wrong.");
+      } finally {
+         setIsUpdating(false);
+      }
+   };
+
    return (
-      <div className="mt-6 border bg-slate-100 rounded-md p-4">
+      <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+         {isUpdating && (
+            <div className="absolute h-full w-full bg-slate-500/20 top-0 right-0 rounded-md flex items-center justify-center">
+               <Loader2 className="animate-spin h-6 w-6 text-sky-700" />
+            </div>
+         )}
          <div className="font-medium flex items-center justify-between">
             Course Chapters
             <Button variant="ghost" onClick={toggleCreating}>
@@ -81,10 +107,14 @@ export const ChaptersForm = ({
             <>
                <div className={cn(
                   "text-sm mt-2",
-                  !initialData.chapters.length && "text-slate-500 italic"
+                  !course.chapters.length && "text-slate-500 italic"
                )}>
-                  {!initialData.chapters.length && "No chapters available"}
-                  {/* TODO: Add a draggable list of chapters */}
+                  {!course.chapters.length && "No chapters available"}
+                  <ChaptersList
+                     onEdit={onEdit}
+                     onReorder={onReorder}
+                     items={course.chapters || []}
+                  />
                </div>
                <p className="text-xs text-muted-foreground mt-4">
                   Drag and drop to reorder the chapters
