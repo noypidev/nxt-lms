@@ -21,6 +21,17 @@ export async function PATCH(
          return new NextResponse("Unauthorized", { status: 401 });
       }
 
+      const courseOwner = await db.course.findUnique({
+         where: {
+            id: params.courseId,
+            userId: userId,
+         },
+      });
+
+      if (!courseOwner) {
+         return new NextResponse("Unathorized", { status: 401 });
+      }
+
       const chapter = await db.chapter.update({
          where: {
             id: params.chapterId,
@@ -33,7 +44,7 @@ export async function PATCH(
 
       return NextResponse.json(chapter);
    } catch (error) {
-      console.log("[COURSE_ID]", error);
+      console.log("[COURSES_CHAPTER_ID]", error);
       return new NextResponse("Internal Error", { status: 500 });
    }
 }
